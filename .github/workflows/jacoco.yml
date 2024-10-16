@@ -2,7 +2,7 @@
 name: Measure coverage
 
 on:
-  create:
+  workflow_dispatch:
   pull_request:
     branches: [main]
 
