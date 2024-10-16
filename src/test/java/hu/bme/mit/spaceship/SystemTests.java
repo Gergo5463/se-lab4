@@ -67,7 +67,8 @@ class SystemTests {
                     if (matcher.matches(path)) {
                         Path in = path;
                         Path out = Path.of(path.toString().replace("input", "output"));
-                        args.add(Arguments.of(Named.of(in.toString(), in), Named.of(out.toString(), out)));
+                        args.add(Arguments.of(Named.of(in.toString(), in),
+                                Named.of(out.toString(), out)));
                     }
                     return FileVisitResult.CONTINUE;
                 }

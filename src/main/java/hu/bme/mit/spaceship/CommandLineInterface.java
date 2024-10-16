@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
  * Minimal command line interface (CLI) to initialize and use spaceships.
  */
 public class CommandLineInterface {
-    
+
     private static Map<String, Handler> handlers = Map.of(
         "HELP", CommandLineInterface::handleHelp,
         "GT4500", CommandLineInterface::handleGT4500,
@@ -25,11 +25,9 @@ public class CommandLineInterface {
     }
 
     /**
-     * Read and handle commands from an input stream, writing output to
-     * another stream.
+     * Read and handle commands from an input stream, writing output to another stream.
      * 
-     * The optional err stream receives output only useful in an
-     * interactive session.
+     * The optional err stream receives output only useful in an interactive session.
      * 
      * @param in The input stream to read commands from
      * @param out The output stream to write results to
@@ -39,7 +37,8 @@ public class CommandLineInterface {
         Context ctx = new Context();
         ctx.out = new PrintStream(out);
 
-        err.println("Welcome to the console interface.  Available commands: " + handlers.keySet().toString());
+        err.println("Welcome to the console interface.  Available commands: "
+                + handlers.keySet().toString());
         try (Scanner scanner = new Scanner(in)) {
             CommandResult result = CommandResult.CONTINUE;
             do {
@@ -126,7 +125,7 @@ public class CommandLineInterface {
             throw new IllegalArgumentException("SYNTAX: TORPEDO,<SINGLE|ALL>");
         }
 
-        FiringMode firingMode = FiringMode.valueOf(params[1].toUpperCase());            
+        FiringMode firingMode = FiringMode.valueOf(params[1].toUpperCase());
         boolean success = ctx.ship.fireTorpedo(firingMode);
         ctx.out.println(success ? "SUCCESS" : "FAIL");
         return CommandResult.CONTINUE;
@@ -148,8 +147,8 @@ public class CommandLineInterface {
     }
 
     /**
-     * Rudimentary PrintStream-like interface that silently ignores
-     * if the underlying PrintStream is null.
+     * Rudimentary PrintStream-like interface that silently ignores if the underlying PrintStream is
+     * null.
      */
     private static class OptionalOutput {
 
