@@ -66,6 +66,12 @@ public class CommandLineInterface {
      * @return False if no more commands should be read and application should exit; true otherwise
      */
     private static boolean handle(Context ctx, String command) {
+        if (command.stripLeading().startsWith("#")) {
+            return true;
+        }
+
+        command = command.replaceAll("#.*$", "").strip();
+
         String[] parts = command.split(",");
         String mainCommand = parts[0].toUpperCase();
         
