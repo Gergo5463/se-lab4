@@ -89,10 +89,20 @@ class SystemTests {
     }
 
     /**
-     * Normalize a string by stripping all leading and trailing whitespace and replacing all
-     * whitespace with a single space.
+     * Normalize a string.
+     * 
+     * This function does the following:
+     * <ol>
+     * <li>remove comment characters (<code>#</code>) and any characters that follow them in the
+     * same line
+     * <li>replace all remaining consecutive whitespace with single spaces
+     * <li>strip all leading and trailing whitespace
+     * </ol>
      */
     private static String normalizeString(String s) {
-        return s.strip().replaceAll("\\s+", " ");
+        return s.replaceAll("#.*" + System.lineSeparator(), System.lineSeparator())
+                .replaceAll("#.*$", "")
+                .replaceAll("\\s+", " ")
+                .strip();
     }
 }
