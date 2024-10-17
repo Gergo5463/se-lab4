@@ -77,7 +77,7 @@ public class CommandLineInterface {
         try {
             Handler handler = handlers.get(mainCommand);
             if (handler == null) {
-                ctx.out.println("UNKNOWN COMMAND");
+                ctx.out.printf("Unknown command: '%s'%n", mainCommand);
             } else {
                 result = handler.apply(ctx, parts);
             }
@@ -105,11 +105,24 @@ public class CommandLineInterface {
     private static CommandResult handleGT4500(Context ctx, String[] params) {
         if (params.length != 5) {
             throw new IllegalArgumentException(
-                    "SYNTAX: GT4500,<PRI_CNT>,<PRI_FAIL_RATE>,<SEC_CNT>,<SEC_FAIL_RATE>");
+                    "usage: GT4500,<PRI_CNT>,<PRI_FAIL_RATE>,<SEC_CNT>,<SEC_FAIL_RATE>");
         }
 
-        ctx.ship = new GT4500(Integer.parseInt(params[1]), Double.parseDouble(params[2]),
-                Integer.parseInt(params[3]), Double.parseDouble(params[4]));
+        int primaryCount;
+        int secondaryCount;
+        double primaryFailRate;
+        double secondaryFailRate;
+        try {
+            primaryCount = Integer.parseInt(params[1]);
+            primaryFailRate = Double.parseDouble(params[2]);
+            secondaryCount = Integer.parseInt(params[3]);
+            secondaryFailRate = Double.parseDouble(params[4]);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "Invalid numerical arguments passed: " + e.getLocalizedMessage(), e);
+        }
+
+        ctx.ship = new GT4500(primaryCount, primaryFailRate, secondaryCount, secondaryFailRate);
         ctx.out.println("SUCCESS");
         return CommandResult.CONTINUE;
     }
@@ -119,13 +132,19 @@ public class CommandLineInterface {
      */
     private static CommandResult handleTorpedo(Context ctx, String[] params) {
         if (ctx.ship == null) {
-            throw new IllegalArgumentException("SHIP NOT INITIALIZED");
+            throw new IllegalArgumentException("No ship has been initialized");
         }
         if (params.length != 2) {
-            throw new IllegalArgumentException("SYNTAX: TORPEDO,<SINGLE|ALL>");
+            throw new IllegalArgumentException("usage: TORPEDO,<SINGLE|ALL>");
         }
 
-        FiringMode firingMode = FiringMode.valueOf(params[1].toUpperCase());
+        FiringMode firingMode;
+        try {
+            firingMode = FiringMode.valueOf(params[1].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    String.format("Unknown firing mode: '%s'", params[1].toUpperCase()), e);
+        }
         boolean success = ctx.ship.fireTorpedo(firingMode);
         ctx.out.println(success ? "SUCCESS" : "FAIL");
         return CommandResult.CONTINUE;
