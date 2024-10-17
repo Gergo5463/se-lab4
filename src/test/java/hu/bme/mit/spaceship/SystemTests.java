@@ -100,9 +100,6 @@ class SystemTests {
      * </ol>
      */
     private static String normalizeString(String s) {
-        return s.replaceAll("#.*" + System.lineSeparator(), System.lineSeparator())
-                .replaceAll("#.*$", "")
-                .replaceAll("\\s+", " ")
-                .strip();
+        return s.replaceAll("#.*", "").replaceAll("\\s+", " ").strip();
     }
 }
