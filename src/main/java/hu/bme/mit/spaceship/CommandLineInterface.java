@@ -143,8 +143,7 @@ public class CommandLineInterface {
         PrintStream out;
     }
 
-    private static interface Handler extends BiFunction<Context, String[], CommandResult> {
-    }
+    private static interface Handler extends BiFunction<Context, String[], CommandResult> {}
 
     /**
      * Rudimentary PrintStream-like interface that silently ignores if the underlying PrintStream is
