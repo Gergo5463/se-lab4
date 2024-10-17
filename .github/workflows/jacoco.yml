@@ -9,6 +9,9 @@ on:
 env:
   COVERAGE_THRESHOLD: 0.8
 
+permissions:
+  pull-requests: write
+
 jobs:
   test:
     name: Coverage with JaCoCo
@@ -70,3 +73,4 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: core.setFailed('Coverage metrics do not meet requirements')
+
