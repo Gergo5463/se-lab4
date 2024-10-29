@@ -69,6 +69,9 @@ public class CommandLineInterface {
         }
 
         command = command.replaceAll("#.*$", "").strip();
+        if (command.isEmpty()) {
+            return CommandResult.CONTINUE;
+        }
 
         String[] parts = command.split(",");
         String mainCommand = parts[0].toUpperCase();
