@@ -10,6 +10,7 @@ env:
   COVERAGE_THRESHOLD: 0.8
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
