@@ -51,7 +51,7 @@ class SystemTests {
         } else {
             String expected = normalizeString(Files.readString(output));
             String actual = normalizeString(actualOut.toString());
-            assertEquals(expected, actual);
+            assertEquals(expected, actual, output.toString());
         }
     }
 
