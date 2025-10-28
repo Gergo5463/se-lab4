@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
  * Minimal command line interface (CLI) to initialize and use spaceships.
  */
 public class CommandLineInterface {
-    
+
     private static Map<String, Handler> handlers = Map.of(
         "HELP", CommandLineInterface::handleHelp,
         "GT4500", CommandLineInterface::handleGT4500,
@@ -25,11 +25,9 @@ public class CommandLineInterface {
     }
 
     /**
-     * Read and handle commands from an input stream, writing output to
-     * another stream.
+     * Read and handle commands from an input stream, writing output to another stream.
      * 
-     * The optional err stream receives output only useful in an
-     * interactive session.
+     * The optional err stream receives output only useful in an interactive session.
      * 
      * @param in The input stream to read commands from
      * @param out The output stream to write results to
@@ -39,18 +37,18 @@ public class CommandLineInterface {
         Context ctx = new Context();
         ctx.out = new PrintStream(out);
 
-        err.println("Welcome to the console interface.  Available commands: " + handlers.keySet().toString());
+        err.println("Welcome to the console interface.  Available commands: "
+                + handlers.keySet().toString());
         try (Scanner scanner = new Scanner(in)) {
-            boolean shouldContinue = true;
-	    do {
+            CommandResult result = CommandResult.CONTINUE;
+            do {
                 err.print("> ");
                 try {
-                    shouldContinue = handle(ctx, scanner.nextLine());
+                    result = handle(ctx, scanner.nextLine());
                 } catch (NoSuchElementException e) {
-                    shouldContinue = false;
+                    result = CommandResult.EXIT;
                 }
-
-            } while (shouldContinue);
+            } while (result == CommandResult.CONTINUE);
         }
     }
 
@@ -63,72 +61,103 @@ public class CommandLineInterface {
      * 
      * @param ctx The current CLI context
      * @param command The command as a list of comma-separated tokens
-     * @return False if no more commands should be read and application should exit; true otherwise
+     * @return whether execution should continue
      */
-    private static boolean handle(Context ctx, String command) {
+    private static CommandResult handle(Context ctx, String command) {
+        if (command.stripLeading().startsWith("#")) {
+            return CommandResult.CONTINUE;
+        }
+
+        command = command.replaceAll("#.*$", "").strip();
+        if (command.isEmpty()) {
+            return CommandResult.CONTINUE;
+        }
+
         String[] parts = command.split(",");
         String mainCommand = parts[0].toUpperCase();
-        
-        boolean shouldContinue = true;
+
+        CommandResult result = CommandResult.CONTINUE;
         try {
             Handler handler = handlers.get(mainCommand);
             if (handler == null) {
-                ctx.out.println("UNKNOWN COMMAND");
+                ctx.out.printf("Unknown command: '%s'%n", mainCommand);
             } else {
-                shouldContinue = handler.apply(ctx, parts);
+                result = handler.apply(ctx, parts);
             }
         } catch (IllegalArgumentException e) {
             ctx.out.println(e.getLocalizedMessage());
         }
 
-        return shouldContinue;
+        return result;
     }
 
     /**
      * Handle the HELP command.
      */
-    private static boolean handleHelp(Context ctx, String[] params) {
+    private static CommandResult handleHelp(Context ctx, String[] params) {
         ctx.out.println("Available commands: " + handlers.keySet());
         ctx.out.println("Generally, commands receive parameters; refer to the documentation");
-        ctx.out.println("Before firing torpedoes using the TORPEDO command, you must initialize a ship (eg. a GT4500) using its name as a command");
-        return true;        
+        ctx.out.println(
+                "Before firing torpedoes using the TORPEDO command, you must initialize a ship (eg. a GT4500) using its name as a command");
+        return CommandResult.CONTINUE;
     }
-    
+
     /**
      * Handle the GT4500 command.
      */
-    private static boolean handleGT4500(Context ctx, String[] params) {
+    private static CommandResult handleGT4500(Context ctx, String[] params) {
         if (params.length != 5) {
-            throw new IllegalArgumentException("SYNTAX: GT4500,<PRI_CNT>,<PRI_FAIL_RATE>,<SEC_CNT>,<SEC_FAIL_RATE>");
+            throw new IllegalArgumentException(
+                    "usage: GT4500,<PRI_CNT>,<PRI_FAIL_RATE>,<SEC_CNT>,<SEC_FAIL_RATE>");
         }
 
-        ctx.ship = new GT4500(Integer.parseInt(params[1]), Double.parseDouble(params[2]), Integer.parseInt(params[3]), Double.parseDouble(params[4]));
+        int primaryCount;
+        int secondaryCount;
+        double primaryFailRate;
+        double secondaryFailRate;
+        try {
+            primaryCount = Integer.parseInt(params[1]);
+            primaryFailRate = Double.parseDouble(params[2]);
+            secondaryCount = Integer.parseInt(params[3]);
+            secondaryFailRate = Double.parseDouble(params[4]);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "Invalid numerical arguments passed: " + e.getLocalizedMessage(), e);
+        }
+
+        ctx.ship = new GT4500(primaryCount, primaryFailRate, secondaryCount, secondaryFailRate);
         ctx.out.println("SUCCESS");
-        return true;        
+        return CommandResult.CONTINUE;
     }
 
     /**
      * Handle the TORPEDO command.
      */
-    private static boolean handleTorpedo(Context ctx, String[] params) {
+    private static CommandResult handleTorpedo(Context ctx, String[] params) {
         if (ctx.ship == null) {
-            throw new IllegalArgumentException("SHIP NOT INITIALIZED");
+            throw new IllegalArgumentException("No ship has been initialized");
         }
         if (params.length != 2) {
-            throw new IllegalArgumentException("SYNTAX: TORPEDO,<SINGLE|ALL>");
+            throw new IllegalArgumentException("usage: TORPEDO,<SINGLE|ALL>");
         }
 
-        FiringMode firingMode = FiringMode.valueOf(params[1].toUpperCase());            
+        FiringMode firingMode;
+        try {
+            firingMode = FiringMode.valueOf(params[1].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    String.format("Unknown firing mode: '%s'", params[1].toUpperCase()), e);
+        }
         boolean success = ctx.ship.fireTorpedo(firingMode);
         ctx.out.println(success ? "SUCCESS" : "FAIL");
-        return true;        
+        return CommandResult.CONTINUE;
     }
 
     /**
      * Handle the EXIT command.
      */
-    private static boolean handleExit(Context ctx, String[] params) {
-        return false;        
+    private static CommandResult handleExit(Context ctx, String[] params) {
+        return CommandResult.EXIT;
     }
 
     private static class Context {
@@ -136,11 +165,11 @@ public class CommandLineInterface {
         PrintStream out;
     }
 
-    private static interface Handler extends BiFunction<Context, String[], Boolean> {}
+    private static interface Handler extends BiFunction<Context, String[], CommandResult> {}
 
     /**
-     * Rudimentary PrintStream-like interface that silently ignores
-     * if the underlying PrintStream is null.
+     * Rudimentary PrintStream-like interface that silently ignores if the underlying PrintStream is
+     * null.
      */
     private static class OptionalOutput {
 
@@ -161,5 +190,12 @@ public class CommandLineInterface {
         public void println(String message) {
             print(message + "\n");
         }
+    }
+
+    /**
+     * More readable enumeration for command results.
+     */
+    private enum CommandResult {
+        CONTINUE, EXIT
     }
 }
